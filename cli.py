@@ -1,9 +1,11 @@
 import argparse 
+import json
 from network.port_scanner import scan_ports
 from network.traceroute import trace_route, parse_trace_route
 from network.banner_grabber import grab_banner
 from network.os_detector import get_ttl, guess_os
 from network.arp_scanner import arp_scan
+from network.dns_checker import check_dns
 
 def main():
     parser = argparse.ArgumentParser(description="0xSTU4RT - multifunctional forensic tool")
@@ -18,6 +20,7 @@ def main():
     network_parser.add_argument("--port", type=int, help="port to use with --banner")
     network_parser.add_argument("--detect-os", metavar="TARGET", help="guess the OS of a target via TTL")
     network_parser.add_argument("--arp-scan", metavar="RANGE", help="scan local network by arp (e.g. 192.x.x.0/24")
+    network_parser.add_argument("--dns", metavar="DOMAIN", help="check DNS records of a domain")
     
     args = parser.parse_args()
     
@@ -43,11 +46,14 @@ def main():
                 banner = grab_banner(args.banner, args.port)
                 if banner:
                     print(f"[+] banner: {banner}")
-                else:
+                else:                                                                               
                     print("[-] no banner received")
                     
         if args.detect_os:
-            print(f"[+] detecting OS of {args.detect_os}...\n[+] linux -> 64~\n[+] windows -> 128~\n[+] network device -> 255~")
+            print(f"[+] detecting OS of {args.detect_os}...\n"
+                  "[+] linux -> 64~\n"
+                  "[+] windows -> 128~\n"
+                  "[+] network device -> 255~")
             ttl = get_ttl(args.detect_os)
             result = guess_os(ttl)
             print(f"[+] TTL: {ttl} -> {result}")
@@ -58,6 +64,17 @@ def main():
             print(f"[-] {len(devices)} device(s) found:")
             for device in devices:
                 print(f"FOUND: {device['ip']} -> {device['mac']}")
+                
+        if args.dns:
+            print(f"[+] checking DNS records for {args.dns}...\n"
+                  "[+] A -> IPV4 address\n"
+                  "[+] AAAA -> IPV6 address\n"
+                  "[+] CNAME -> domain alias\n"
+                  "[+] MX -> e-mail domain\n"
+                  "[+] TXT -> domain validation/SPF/DKIM in free text\n"
+                  "[+] NS -> private name servers for the domain")
+            records = check_dns(args.dns)
+            print(json.dumps(records, indent=2))
                     
             
 if __name__ == "__main__":
