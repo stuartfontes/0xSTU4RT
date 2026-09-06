@@ -3,6 +3,7 @@ from network.port_scanner import scan_ports
 from network.traceroute import trace_route, parse_trace_route
 from network.banner_grabber import grab_banner
 from network.os_detector import get_ttl, guess_os
+from network.arp_scanner import arp_scan
 
 def main():
     parser = argparse.ArgumentParser(description="0xSTU4RT - multifunctional forensic tool")
@@ -16,6 +17,7 @@ def main():
     network_parser.add_argument("--banner", metavar="TARGET", help="grab service banner from a target")
     network_parser.add_argument("--port", type=int, help="port to use with --banner")
     network_parser.add_argument("--detect-os", metavar="TARGET", help="guess the OS of a target via TTL")
+    network_parser.add_argument("--arp-scan", metavar="RANGE", help="scan local network by arp (e.g. 192.x.x.0/24")
     
     args = parser.parse_args()
     
@@ -49,6 +51,13 @@ def main():
             ttl = get_ttl(args.detect_os)
             result = guess_os(ttl)
             print(f"[+] TTL: {ttl} -> {result}")
+            
+        if args.arp_scan:
+            print(f"[+] scanning local network {args.arp_scan}...")
+            devices = arp_scan(args.arp_scan)
+            print(f"[-] {len(devices)} device(s) found:")
+            for device in devices:
+                print(f"FOUND: {device['ip']} -> {device['mac']}")
                     
             
 if __name__ == "__main__":
