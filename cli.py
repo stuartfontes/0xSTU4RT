@@ -10,6 +10,7 @@ from network.arp_scanner import arp_scan
 from network.dns_checker import check_dns
 from network.ssh_client import run_ssh_command
 from network.ssh_interactive import start_interactive_session
+from network.geolocator import geolocate
 
 def main():
     show_banner()
@@ -29,7 +30,8 @@ def main():
     network_parser.add_argument("--ssh", metavar="HOST", help="connect to a host via SSH")
     network_parser.add_argument("--user", metavar="USERNAME", help="username to use with --ssh")
     network_parser.add_argument("--run", metavar="COMMAND", help="run a single command via --ssh instead of an interactive session")
-
+    network_parser.add_argument("--geo", metavar="IP", help="geolocate a public IP address (offline, MaxMind GeoLite2)")
+    
     args = parser.parse_args()
 
     if args.command == "network":
@@ -86,6 +88,16 @@ def main():
                         print(f"[!] {result['error']}")
                 else:
                     start_interactive_session(args.ssh, args.user, password, port=args.port)
+                    
+        if args.geo:
+            print(f"[+] geolocating {args.geo}...")
+            result = geolocate(args.geo)
+            if "error" in result:
+                print (f"[!] {result['error']}")
+            else:
+                print(f"[+] country: {result['country']}\n"
+                      f"[+] city: {result['city']}\n"
+                      f"[+] coordinates: {result['latitude'], {result['longitude']}}\n")
 
 if __name__ == "__main__":
     main()
